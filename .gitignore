@@ -1,0 +1,10 @@
+# global ignore rules
+
+try.py
+.vscode
+__pycache__
+
+# special ignore rules
+
+Backup
+Data
