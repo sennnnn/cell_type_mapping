@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 
+from re import sub
 from cell2location import run_regression, run_cell2location
 
 
@@ -191,3 +192,22 @@ def preprocess_spdata(data_folder, data_list_name, data_block_name):
     adata = adata[:, ~adata.var['mt'].values]
 
     return adata
+
+
+def sc_expression_signature(path):
+    ## snRNAseq reference (raw counts)
+    adata_snrna_raw = sc.read(path)
+
+    # Column name containing cell type annotations
+    covariate_col_names = 'annotation_1'
+
+    # Extract a pd.DataFrame with signatures from anndata object
+    inf_aver = adata_snrna_raw.raw.var.copy()
+    inf_aver = inf_aver.loc[:, [f'means_cov_effect_{covariate_col_names}_{i}' for i in adata_snrna_raw.obs[covariate_col_names].unique()]]
+    inf_aver.columns = [sub(f'means_cov_effect_{covariate_col_names}_{i}', '', i) for i in adata_snrna_raw.obs[covariate_col_names].unique()]
+    inf_aver = inf_aver.iloc[:, inf_aver.columns.argsort()]
+
+    # normalise by average experiment scaling factor (corrects for sequencing depth)
+    inf_aver = inf_aver * adata_snrna_raw.uns['regression_mod']['post_sample_means']['sample_scaling'].mean()
+
+    return inf_aver
