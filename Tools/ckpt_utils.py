@@ -8,7 +8,7 @@ class Saver(object):
         self.save_key_word = save_key_word
         self.loss_type = loss_type
         self.best_or_newest = best_or_newest
-        self.best_metric_value = -1
+        self.best_metric_value = 999999999999
         
         if not os.path.exists(self.backup_path):
             os.makedirs(self.backup_path, 0o777)

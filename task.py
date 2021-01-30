@@ -6,8 +6,7 @@ import matplotlib.pyplot as plt
 
 import argparse
 
-from Dataloaders import *
-from Dataloaders.preprocess import *
+from Dataloader import *
 from Modeling import *
 
 from Tools.loss_utils import *
@@ -36,10 +35,12 @@ def train(params):
     # Record Tools
     record_tool = TrainRecorder(params["BACKUP_PATH"], params["CUSTOM_KEY"], params["LOSS_TYPE"], params["START_EPOCH"])
     # Signature Load
-    signature = pd.read_csv(params["SIGNATURE_PATH"])
-    signature = torch.tensor(np.array(signature))
+    signature = pd.read_csv(params["SIGNATURE_PATH"], index_col=0)
+    signature_array = np.array(signature)
+    signature_array_t = signature_array.T
+    signature_tensor = torch.tensor(signature_array_t).float()
     if params["CUDA"]:
-        signature = signature.cuda()
+        signature_tensor = signature_tensor.cuda()
     # Main Loop
     for epoch in range(params["START_EPOCH"] - 1, params["TOTAL_EPOCHES"]):
         loss_epoch_avg = 0
@@ -48,7 +49,7 @@ def train(params):
             # Inference
             input_data = batch
             predict = model(input_data)
-            predict = torch.matmul(predict, signature)
+            predict = torch.matmul(predict, signature_tensor)
             loss_variable = loss(predict, input_data)
             # Learning Rate Schedule
             lr_scheduler(optimizer, step + 1, epoch + 1)
@@ -64,7 +65,7 @@ def train(params):
             loss_epoch_avg      += loss_value
             # Log Information Print
             loss_string   = "Loss: {:+.3f}".format(loss_value)
-            log_string    = "Epoch: {:<3} Step: {:>4}/{:<4} {} {}".format(epoch + 1, step + 1, total_step_per_epoch, loss_string)
+            log_string    = "Epoch: {:<3} Step: {:>4}/{:<4} {}".format(epoch + 1, step + 1, total_step_per_epoch, loss_string)
             print(log_string)
             # Record Middle Result
             record_tool.write([epoch + 1, loss_value], log_string)
@@ -80,6 +81,7 @@ def train(params):
 def test(params, model=None, train_performance=None, epoch=None):
    pass
 
+
 if __name__ == "__main__":
     params = {}
 
@@ -88,6 +90,8 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_name", type=str, default="visium")
     parser.add_argument("--GPU_number", type=int, default=0)
     parser.add_argument("--batch_size", type=int, default=4)
+
+    args = parser.parse_args()
 
     # Data load settings
     params["BATCH_SIZE"] = args.batch_size
@@ -102,7 +106,7 @@ if __name__ == "__main__":
     params["HIDDEN_CHANNELS"] = 1024
     # Task settings
     params["TASK"] = "train"
-    params["LR"] = 0.001
+    params["LR"] = 0.0001
     params["CUDA"] = True
     params["START_EPOCH"] = 1
     params["WARM_UP_EPOCHES"] = 1
