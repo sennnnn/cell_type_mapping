@@ -6,6 +6,10 @@
 
 Reference URL: https://cloud.tencent.com/developer/article/1610396
 
+### Gene Expression Signature
+
+The gene expression signature is the expression amount of each gene.  
+
 ## Error
 
 ### Number #1

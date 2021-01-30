@@ -3,6 +3,8 @@ import os
 import numpy as np
 import pandas as pd
 import scanpy as sc
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 from re import sub
 from cell2location import run_regression, run_cell2location
@@ -57,13 +59,13 @@ def read_and_qc(sample_name, path):
 
 
 def umap_representation(adata_snrna_raw):
-   sc.pp.log1p(adata_snrna_raw)
-   sc.pp.scale(adata_snrna_raw, max_value=10)
-   sc.tl.pca(adata_snrna_raw, svd_solver='arpack', n_comps=80, use_highly_variable=False)
+    sc.pp.log1p(adata_snrna_raw)
+    sc.pp.scale(adata_snrna_raw, max_value=10)
+    sc.tl.pca(adata_snrna_raw, svd_solver='arpack', n_comps=80, use_highly_variable=False)
 
 
 def sc_expression_regression(adata_snrna_raw, results_folder):
-   r, adata_snrna_raw = run_regression(adata_snrna_raw, # input data object]
+    r, adata_snrna_raw = run_regression(adata_snrna_raw, # input data object]
 
                    verbose=True, return_all=True,
 
@@ -94,50 +96,50 @@ def sc_expression_regression(adata_snrna_raw, results_folder):
                                 'save_model': True, # save pytorch model?
                                 'run_name_suffix': ''})
 
-   return r, adata_snrna_raw
+    return r, adata_snrna_raw
 
 
-def preprocess_scdata(data_folder, sc_data_name, types_name):
-   sc_data_path = os.path.join(sc_data_folder, sc_data_name)
-   types_path = os.path.join(sc_data_folder, types_name)
-   # Data Reading
-   ## Single Cell Gene Experission Data
-   adata_snrna_raw = anndata.read_h5ad(sc_data_path)
-   ## Label: Sample Index -- Cell Type
-   ### The zero index col is the sample name with UMI.
-   labels = pd.read_csv(types_path, index_col=0)
-   # Preprocessing
-   ## Store the cell type annotation into anndata object.
-   labels = labels.reindex(index=adata_snrna_raw.obs_names)
-   adata_snrna_raw.obs[labels.columns] = labels
-   adata_snrna_raw = adata_snrna_raw[~adata_snrna_raw.obs["annotation_1"].isna(), :]
-   ## Remove invalid item.
-   sc.pp.filter_cells(adata_snrna_raw, min_genes=1)
-   sc.pp.filter_genes(adata_snrna_raw, min_cells=1)
-   ## .X is the CellxGene expression table.
-   ## The first dimension is cell and the second dimension is gene.
-   expression_table = adata_snrna_raw.X
-   expression_array = expression_table.toarray()
-   ## Calculate non-zero expression cell number of each gene.
-   adata_snrna_raw.var['n_cells'] = (expression_array > 0).sum(0)
-   ## Calculate average expression amount per cell of each gene.
-   adata_snrna_raw.var['nonz_mean'] = expression_array.sum(0) / adata_snrna_raw.var['n_cells']
-   ## Cut off lowly-expressed gene.
-   cell_total_count = expression_array.shape[0]
-   nonz_mean_cutoff = 0.05
-   cell_count_cutoff = np.log10(cell_total_count * 0.0005)
-   cell_count_cutoff2 = np.log10(cell_total_count * 0.03)
-   ## First cutoff: Include all genes expressed by at least 3% of cells.
-   adata_snrna_raw = adata_snrna_raw[:, np.array(np.log10(adata_snrna_raw.var['n_cells']) > cell_count_cutoff2)]
-   ## Second cutoff: Include genes expressed by at least 0.05% of cells when they have high counts in non-zero cells.
-   adata_snrna_raw = adata_snrna_raw[:, (np.array(np.log10(adata_snrna_raw.var['nonz_mean']) > nonz_mean_cutoff)
-                                       & np.array(np.log10(adata_snrna_raw.var['n_cells']) > cell_count_cutoff))]
-   ## Remove genes which has invalid gene name.
-   adata_snrna_raw = adata_snrna_raw[:, np.array(~adata_snrna_raw.var["SYMBOL"].isna())]
-   adata_snrna_raw.raw = adata_snrna_raw
-   adata_snrna_raw.X = adata_snrna_raw.raw.X.copy()
+def preprocess_scdata(sc_data_folder, sc_data_name, cell_types_name):
+    sc_data_path = os.path.join(sc_data_folder, sc_data_name)
+    types_path = os.path.join(sc_data_folder, cell_types_name)
+    # Data Reading
+    ## Single Cell Gene Experission Data
+    adata_snrna_raw = sc.read_h5ad(sc_data_path)
+    ## Label: Sample Index -- Cell Type
+    ### The zero index col is the sample name with UMI.
+    labels = pd.read_csv(types_path, index_col=0)
+    # Preprocessing
+    ## Store the cell type annotation into anndata object.
+    labels = labels.reindex(index=adata_snrna_raw.obs_names)
+    adata_snrna_raw.obs[labels.columns] = labels
+    adata_snrna_raw = adata_snrna_raw[~adata_snrna_raw.obs["annotation_1"].isna(), :]
+    ## Remove invalid item.
+    sc.pp.filter_cells(adata_snrna_raw, min_genes=1)
+    sc.pp.filter_genes(adata_snrna_raw, min_cells=1)
+    ## .X is the CellxGene expression table.
+    ## The first dimension is cell and the second dimension is gene.
+    expression_table = adata_snrna_raw.X
+    expression_array = expression_table.toarray()
+    ## Calculate non-zero expression cell number of each gene.
+    adata_snrna_raw.var['n_cells'] = (expression_array > 0).sum(0)
+    ## Calculate average expression amount per cell of each gene.
+    adata_snrna_raw.var['nonz_mean'] = expression_array.sum(0) / adata_snrna_raw.var['n_cells']
+    ## Cut off lowly-expressed gene.
+    cell_total_count = expression_array.shape[0]
+    nonz_mean_cutoff = 0.05
+    cell_count_cutoff = np.log10(cell_total_count * 0.0005)
+    cell_count_cutoff2 = np.log10(cell_total_count * 0.03)
+    ## First cutoff: Include all genes expressed by at least 3% of cells.
+    adata_snrna_raw = adata_snrna_raw[:, np.array(np.log10(adata_snrna_raw.var['n_cells']) > cell_count_cutoff2)]
+    ## Second cutoff: Include genes expressed by at least 0.05% of cells when they have high counts in non-zero cells.
+    adata_snrna_raw = adata_snrna_raw[:, (np.array(np.log10(adata_snrna_raw.var['nonz_mean']) > nonz_mean_cutoff)
+                                        & np.array(np.log10(adata_snrna_raw.var['n_cells']) > cell_count_cutoff))]
+    ## Remove genes which has invalid gene name.
+    adata_snrna_raw = adata_snrna_raw[:, np.array(~adata_snrna_raw.var["SYMBOL"].isna())]
+    adata_snrna_raw.raw = adata_snrna_raw
+    adata_snrna_raw.X = adata_snrna_raw.raw.X.copy()
 
-   return adata_snrna_raw
+    return adata_snrna_raw
 
 
 def preprocess_spdata_single(data_folder, sample_name):
@@ -194,7 +196,7 @@ def preprocess_spdata(data_folder, data_list_name, data_block_name):
     return adata
 
 
-def sc_expression_signature(path):
+def sc_expression_signature(path, if_raw=False):
     ## snRNAseq reference (raw counts)
     adata_snrna_raw = sc.read(path)
 
@@ -210,4 +212,7 @@ def sc_expression_signature(path):
     # normalise by average experiment scaling factor (corrects for sequencing depth)
     inf_aver = inf_aver * adata_snrna_raw.uns['regression_mod']['post_sample_means']['sample_scaling'].mean()
 
-    return inf_aver
+    if if_raw:
+        return inf_aver, adata_snrna_raw
+    else:
+        return inf_aver, None
