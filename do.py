@@ -45,10 +45,48 @@ data_block_name = "rawdata/"
 data_list_path = os.path.join(sp_data_folder, "Visium_mouse.csv")
 data_block_path = os.path.join(sp_data_folder, "rawdata/")
 
-adata = sc.read_h5ad("Data/visium_dataset.h5ad")
+adata = sc.read_h5ad("sp.h5ad")
 
-print(adata)
-print(adata.X.toarray().shape)
+from cell2location.plt.mapping_video import plot_spatial
+
+# select up to 6 clusters
+sel_clust = ['Oligo_2', 'Inh_Meis2_3', 'Inh_4', 'Ext_Thal_1', 'Ext_L23', 'Ext_L56']
+sel_clust_col = ['q05_spot_factors' + str(i) for i in sel_clust]
+
+slide = select_slide(adata, 'ST8059048')
+
+# keys = slide.obs.keys()
+# collect = []
+# for key in keys:
+#     if "spot" in key and "q95" in key:
+#         print(key)
+#         collect.append(key)
+#     continue
+#     flag = False
+#     for sel in sel_clust:
+#         if sel in key:
+#             flag = True
+#             break
+#     if flag:
+#         print(key)
+
+
+# print(len(collect))
+# exit(0)
+selected_slide = slide.obs[sel_clust_col]
+print(selected_slide)
+
+with mpl.rc_context({'figure.figsize': (15, 15)}):
+    fig = plot_spatial(slide.obs[sel_clust_col], labels=sel_clust,
+                  coords=slide.obsm['spatial'] \
+                          * list(slide.uns['spatial'].values())[0]['scalefactors']['tissue_hires_scalef'],
+                  show_img=True, img_alpha=0.8,
+                  style='fast', # fast or dark_background
+                  img=list(slide.uns['spatial'].values())[0]['images']['hires'],
+                  circle_diameter=6, colorbar_position='right')
+
+plt.savefig("4.png")
+
 exit(0)
 
 adata_sc = preprocess_scdata(sc_data_folder, sc_data_name, cell_types_name)
