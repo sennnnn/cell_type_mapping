@@ -216,3 +216,11 @@ def sc_expression_signature(path, if_raw=False):
         return inf_aver, adata_snrna_raw
     else:
         return inf_aver, None
+
+
+def parse_list(list_path):
+    fp = open(list_path, "r")
+    lines = fp.readlines()
+    ret_list = [line.strip() for line in lines]
+
+    return ret_list

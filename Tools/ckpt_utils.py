@@ -3,13 +3,19 @@ import torch
 
 
 class Saver(object):
-    def __init__(self, backup_path, save_key_word, loss_type, best_or_newest):
+    def __init__(self, backup_path, save_key_word, loss_type, best_or_newest, mode="lower"):
         self.backup_path   = backup_path
         self.save_key_word = save_key_word
         self.loss_type = loss_type
         self.best_or_newest = best_or_newest
-        self.best_metric_value = 999999999999
-        
+        self.mode = mode
+        if mode == "lower":
+            self.best_metric_value = 999999999999
+        elif mode == "higher":
+            self.best_metric_value = -1
+        else:
+            raise NotImplementedError
+
         if not os.path.exists(self.backup_path):
             os.makedirs(self.backup_path, 0o777)
 
@@ -27,7 +33,12 @@ class Saver(object):
             elif self.best_or_newest == "newest":
                 value_table = [epoch_extracter(x) for x in params_file_list]
 
-            selected_index = value_table.index(max(value_table))
+            if self.mode == "higher":
+                best_value = max(value_table)
+            elif self.mode == "lower":
+                best_value = min(value_table)
+            
+            selected_index = value_table.index(best_value)
             selected_params_file = params_file_list[selected_index]
 
             zip_file = torch.load(os.path.join(self.backup_path, selected_params_file))
@@ -43,7 +54,11 @@ class Saver(object):
             return {"model_params": model_params, "epoch": epoch, "performance": performance}
 
     def save(self, epoch, metric_value, model):
-        if metric_value < self.best_metric_value:
+        if self.mode == "lower":
+            flag = metric_value < self.best_metric_value
+        elif self.mode == "higher":
+            flag = metric_value > self.best_metric_value
+        if flag:
             save_name = "{}@{}_{:.3f}_{}.pth".format(self.save_key_word, epoch, metric_value, self.loss_type)
             save_path = os.path.join(self.backup_path, save_name)
 

@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class Cross_Entropy_Loss(object):
+class CrossEntropyLoss(object):
     def __init__(self):
         self.criterion = nn.CrossEntropyLoss(reduction="mean")
     
@@ -16,7 +16,7 @@ class Cross_Entropy_Loss(object):
         return loss_value
 
 
-class Custom_Cross_Entropy_Loss(object):
+class CustomCrossEntropyLoss(object):
     def __init__(self, weight=None):
         self.weight = weight
 
@@ -48,7 +48,7 @@ class Custom_Cross_Entropy_Loss(object):
 #         return loss_value
 
 
-class Focal_Loss(nn.Module):
+class FocalLoss(nn.Module):
     def __init__(self, alpha=0.5, gamma=2, weight=None, ignore_index=255):
         super().__init__()
         self.alpha = alpha
@@ -64,7 +64,7 @@ class Focal_Loss(nn.Module):
         return loss
 
 
-class Dice_Loss(object):
+class DiceLoss(object):
     def __init__(self, epsilon):
         self.epsilon = epsilon
 
@@ -83,7 +83,7 @@ class Dice_Loss(object):
         return loss_value
 
 
-class Log_Cosh_Dice_Loss(object):
+class LogCoshDiceLoss(object):
     def __init__(self, epsilon):
         self.epsilon = epsilon
 
@@ -102,12 +102,12 @@ class Log_Cosh_Dice_Loss(object):
         return loss_value
 
 
-class Hausdorff_Distance_Loss(object):
+class HausdorffDistanceLoss(object):
     def __init__(self):
         pass
 
 
-class MSE_Loss():
+class MSELoss(object):
     def __init__(self):
         self.criterion = nn.MSELoss(reduction="mean")
 
@@ -117,16 +117,30 @@ class MSE_Loss():
         return loss_value
 
 
+class CustomMSELoss(object):
+    def __init__(self, alpha=0.1):
+        self.criterion = nn.MSELoss(reduction="mean")
+        self.alpha = alpha
+
+    def __call__(self, logit, target):
+        loss_value = self.criterion(logit.float(), target.float())
+        loss_value = loss_value + self.alpha * torch.mean(logit)
+
+        return loss_value
+
+
 def construct_loss(params):
     which = params["LOSS_TYPE"]
     if which == "CROSS_ENTROPY":
-        return Cross_Entropy_Loss()
+        return CrossEntropyLoss()
     elif which == "FOCAL":
-        return Focal_Loss(*params["LOSS_ARGS"])
+        return FocalLoss(*params["LOSS_ARGS"])
     elif which == "DICE":
-        return Dice_Loss(*params["LOSS_ARGS"])
+        return DiceLoss(*params["LOSS_ARGS"])
     elif which == "LOG_COSH_DICE":
-        return Log_Cosh_Dice_Loss(*params["LOSS_ARGS"])
+        return LogCoshDiceLoss(*params["LOSS_ARGS"])
     elif which == "MSE":
-        return MSE_Loss()
+        return MSELoss()
+    elif which == "CMSE":
+        return CustomMSELoss(*params["LOSS_ARGS"])
 

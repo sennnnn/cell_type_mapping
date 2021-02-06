@@ -47,71 +47,71 @@ data_block_path = os.path.join(sp_data_folder, "rawdata/")
 
 adata = sc.read_h5ad("sp.h5ad")
 
-from cell2location.plt.mapping_video import plot_spatial
+# from cell2location.plt.mapping_video import plot_spatial
 
-# select up to 6 clusters
-sel_clust = ['Oligo_2', 'Inh_Meis2_3', 'Inh_4', 'Ext_Thal_1', 'Ext_L23', 'Ext_L56']
-sel_clust_col = ['q05_spot_factors' + str(i) for i in sel_clust]
+# # select up to 6 clusters
+# sel_clust = ['Oligo_2', 'Inh_Meis2_3', 'Inh_4', 'Ext_Thal_1', 'Ext_L23', 'Ext_L56']
+# sel_clust_col = ['q05_spot_factors' + str(i) for i in sel_clust]
 
-slide = select_slide(adata, 'ST8059048')
+# slide = select_slide(adata, 'ST8059048')
 
-# keys = slide.obs.keys()
-# collect = []
-# for key in keys:
-#     if "spot" in key and "q95" in key:
-#         print(key)
-#         collect.append(key)
-#     continue
-#     flag = False
-#     for sel in sel_clust:
-#         if sel in key:
-#             flag = True
-#             break
-#     if flag:
-#         print(key)
+# # keys = slide.obs.keys()
+# # collect = []
+# # for key in keys:
+# #     if "spot" in key and "q95" in key:
+# #         print(key)
+# #         collect.append(key)
+# #     continue
+# #     flag = False
+# #     for sel in sel_clust:
+# #         if sel in key:
+# #             flag = True
+# #             break
+# #     if flag:
+# #         print(key)
 
 
-# print(len(collect))
+# # print(len(collect))
+# # exit(0)
+# selected_slide = slide.obs[sel_clust_col]
+# print(selected_slide)
+
+# with mpl.rc_context({'figure.figsize': (15, 15)}):
+#     fig = plot_spatial(slide.obs[sel_clust_col], labels=sel_clust,
+#                   coords=slide.obsm['spatial'] \
+#                           * list(slide.uns['spatial'].values())[0]['scalefactors']['tissue_hires_scalef'],
+#                   show_img=True, img_alpha=0.8,
+#                   style='fast', # fast or dark_background
+#                   img=list(slide.uns['spatial'].values())[0]['images']['hires'],
+#                   circle_diameter=6, colorbar_position='right')
+
+# plt.savefig("4.png")
+
 # exit(0)
-selected_slide = slide.obs[sel_clust_col]
-print(selected_slide)
 
-with mpl.rc_context({'figure.figsize': (15, 15)}):
-    fig = plot_spatial(slide.obs[sel_clust_col], labels=sel_clust,
-                  coords=slide.obsm['spatial'] \
-                          * list(slide.uns['spatial'].values())[0]['scalefactors']['tissue_hires_scalef'],
-                  show_img=True, img_alpha=0.8,
-                  style='fast', # fast or dark_background
-                  img=list(slide.uns['spatial'].values())[0]['images']['hires'],
-                  circle_diameter=6, colorbar_position='right')
+# adata_sc = preprocess_scdata(sc_data_folder, sc_data_name, cell_types_name)
+# adata = preprocess_spdata(sp_data_folder, data_list_name, data_block_name)
+# # print(adata)
+# # print(adata.obs)
+# # print(adata.obsm["spatial"])
+# # exit(0)
+# adata_vis = adata.copy()
+# adata_vis.raw = adata_vis
 
-plt.savefig("4.png")
+# spatial_information = adata_vis.uns["spatial"]
+# keys = list(spatial_information.keys())
 
-exit(0)
+# adata = adata[adata.obs["sample"].isin(keys[0].split("_")), :]
 
-adata_sc = preprocess_scdata(sc_data_folder, sc_data_name, cell_types_name)
-adata = preprocess_spdata(sp_data_folder, data_list_name, data_block_name)
-# print(adata)
-# print(adata.obs)
-# print(adata.obsm["spatial"])
+# print(list(adata.uns['spatial'].values())[0]) # list(adata.uns['spatial'].values())[0]['scalefactors']['tissue_hires_scalef']
+
+# coords=adata.obsm['spatial'] \
+#                           * list(adata.uns['spatial'].values())[0]['scalefactors']['tissue_hires_scalef']
+# hires_image = spatial_information[keys[0]]["images"]["hires"]
+
+# print(hires_image.shape)
+# print(coords.shape)
 # exit(0)
-adata_vis = adata.copy()
-adata_vis.raw = adata_vis
-
-spatial_information = adata_vis.uns["spatial"]
-keys = list(spatial_information.keys())
-
-adata = adata[adata.obs["sample"].isin(keys[0].split("_")), :]
-
-print(list(adata.uns['spatial'].values())[0]) # list(adata.uns['spatial'].values())[0]['scalefactors']['tissue_hires_scalef']
-
-coords=adata.obsm['spatial'] \
-                          * list(adata.uns['spatial'].values())[0]['scalefactors']['tissue_hires_scalef']
-hires_image = spatial_information[keys[0]]["images"]["hires"]
-
-print(hires_image.shape)
-print(coords.shape)
-exit(0)
 
 inf_aver, adata_snrna_raw = sc_expression_signature(f"{reg_results_folder}/sc.h5ad", True)
 # string = ""
@@ -124,6 +124,7 @@ inf_aver_t = np.log10(inf_aver_t+1)
 print(np.max(inf_aver_t), np.min(inf_aver_t))
 inf_aver_t = (inf_aver_t-np.min(inf_aver_t)) / np.max(inf_aver_t) - np.min(inf_aver_t)
 summation = np.sum(inf_aver, axis=1)
+print(inf_aver.shape, inf_aver_t.shape, summation.shape)
 inf_aver_t_sort = inf_aver_t[:, (-1*summation).argsort()]
 
 inf_aver_t_sort_part = inf_aver_t_sort[:, :50]

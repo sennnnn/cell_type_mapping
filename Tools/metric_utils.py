@@ -132,3 +132,72 @@ def calculate_robust_Hausdorff_distance(array_a, array_b, spacing):
 
     return np.percentile(surf_dists, 95)
     
+
+def accuracy(predict, target):
+    assert np.max(predict) < 2 and np.max(predict) < 2, "Input must be standardly onehot encoded."
+    TP = np.sum((predict == 1) * (target == 1))
+    FP = np.sum((predict == 1) * (target == 0)) 
+    TN = np.sum((predict == 0) * (target == 0))
+    FN = np.sum((predict == 0) * (target == 1))
+    # assert np.max(predict) < 2 and np.max(predict) < 2, "Input must be standardly onehot encoded."
+    # TP = np.sum(predict * target)
+    # FP = np.sum(predict) - TP
+    # FN = np.sum(target)  - TP
+    
+    # P = np.sum(predict)
+    # N = np.sum(predict == 0)
+    # total = P + N
+
+    # FN = total - (TP + FP + TN)
+
+    return (TP + TN) / (TP + FP + TN + FN)
+
+
+def precision(predict, target):
+    assert np.max(predict) < 2 and np.max(predict) < 2, "Input must be standardly onehot encoded."
+    TP = np.sum((predict == 1) * (target == 1))
+    FP = np.sum((predict == 1) * (target == 0)) 
+    TN = np.sum((predict == 0) * (target == 0))
+    FN = np.sum((predict == 0) * (target == 1))
+    
+    return TP / (TP + FP)
+
+
+def recall(predict, target):
+    assert np.max(predict) < 2 and np.max(predict) < 2, "Input must be standardly onehot encoded."
+    TP = np.sum(predict * target)
+    FP = np.sum(predict) - TP
+    FN = np.sum(target)  - TP
+    
+    P = np.sum(predict)
+    N = np.sum(predict == 0)
+    total = P + N
+
+    TN = total - (TP + FP + TN)
+
+    return TP / (TP + FN)
+
+
+def f1_score(predict, target):
+    return 2 / ((1 / precision(predict, target)) + (1 / recall(predict, target)))
+
+
+def mse(logit, target):
+    squared_error = np.square(target - logit)
+    return np.mean(squared_error)
+
+
+def rmse(logit, target):
+    absolute_error = np.sqrt(np.square(target - logit))
+    return np.mean(absolute_error)
+
+
+def cosine(logit, target):
+    logit = logit.flatten()
+    target = target.flatten()
+    dist = np.dot(logit, target) / (np.linalg.norm(logit) * np.linalg.norm(target))
+    return dist
+
+
+def pearson(logit, target):
+    pass

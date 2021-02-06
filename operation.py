@@ -45,12 +45,12 @@ if __name__ == "__main__":
     inf_aver_t = np.array(inf_aver).transpose((1, 0))
     inf_aver_t = np.log10(inf_aver_t+1)
     inf_aver_t = (inf_aver_t-np.min(inf_aver_t)) / np.max(inf_aver_t) - np.min(inf_aver_t)
-    inf_aver_t_sort = inf_aver_t[:, (-1*np.sum(inf_aver_t, axis=1)).argsort()]
+    inf_aver_t_sort = inf_aver_t[:, (-1*np.sum(inf_aver_t, axis=0)).argsort()]
     inf_aver_t_sort_part = inf_aver_t_sort[:, :50]
 
     # Visualization part of reference gene expression signature
-    im = plt.imshow(inf_aver_t_sort_part, cmap="cool")
-    plt.colorbar(cmap="cool")
+    im = plt.imshow(inf_aver_t_sort_part, cmap="spring")
+    plt.colorbar(cmap="spring")
     plt.title("The Reference Expression Signature of Highest Expression Gene (TOP50)")
     plt.xlabel("Highest Expression Gene (Top50)")
     plt.ylabel("Cell Type Index")
@@ -62,6 +62,11 @@ if __name__ == "__main__":
     selected_inf_aver = inf_aver[inf_aver.index.isin(selected_adata_sp_vis.var_names)]
     selected_inf_aver.to_csv("signature.csv")
     selected_adata_sp_vis.write_h5ad("visium.h5ad")
+    anndata = selected_adata_sp_vis
+    train_part = anndata[anndata.obs["sample"].isin(["ST8059049", "ST8059050", "ST8059051", "ST8059052"]), :]
+    test_part  = anndata[anndata.obs["sample"].isin(["ST8059048"]), :]
+    sc.write("train_visium.h5ad", train_part)
+    sc.write("test_visium.h5ad", test_part)
 
     # Visualization top 50 highest expression gene.
     selected_adata_sc = adata_sc[:, adata_sc.var_names.isin(selected_adata_sp_vis.var_names)]

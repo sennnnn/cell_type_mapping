@@ -11,7 +11,7 @@ class TrainRecorder(object):
         self.backup_path = backup_path
         self.save_key_word = save_key_word
 
-        csv_record_path = os.path.join(backup_path, "{}@{}.csv".format(save_key_word, loss_type))
+        csv_record_path = os.path.join(backup_path, "{}@{}_train.csv".format(save_key_word, loss_type))
         txt_record_path = os.path.join(backup_path, "{}@{}.txt".format(save_key_word, loss_type))
 
         if not os.path.exists(backup_path):
@@ -44,7 +44,44 @@ class TrainRecorder(object):
     def row_norm(self, row):
         for index in range(len(row)):
             if isinstance(row[index], float):
-                row[index] = round(row[index], 3)
+                row[index] = round(row[index], 5)
+
+        return row
+
+
+class ValRecorder(object):
+    def __init__(self, backup_path, save_key_word, loss_type, start_epoch=None):
+        self.backup_path = backup_path
+        self.save_key_word = save_key_word
+
+        csv_record_path = os.path.join(backup_path, "{}@{}_val.csv".format(save_key_word, loss_type))
+
+        if not os.path.exists(backup_path):
+            os.makedirs(backup_path, 0o777)
+
+        if start_epoch != None and os.path.exists(csv_record_path):
+            self.restore(start_epoch, csv_record_path)
+
+        if os.path.exists(csv_record_path):
+            self.csv_writer = csv.writer(open(csv_record_path, "a", newline=""))
+        else:
+            print("write open")
+            head_row = ["Epoch", "Cos"]
+            self.csv_writer = csv.writer(open(csv_record_path, "w", newline=""))
+            self.csv_writer.writerow(head_row)
+
+    def restore(self, start_epoch, csv_path):
+        data = pd.read_csv(csv_path)
+        data = data[data["Epoch"] < start_epoch]
+        data.to_csv(csv_path, index=None)
+
+    def write(self, row):
+        self.csv_writer.writerow(self.row_norm(row))
+
+    def row_norm(self, row):
+        for index in range(len(row)):
+            if isinstance(row[index], float):
+                row[index] = round(row[index], 5)
 
         return row
 
